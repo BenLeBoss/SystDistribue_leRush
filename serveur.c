@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 
 int main()
@@ -15,11 +16,12 @@ int main()
   //déclaration de la socket serveur
   struct sockaddr_in addr_server;
   struct sockaddr_in addr_client;
+  char buffer[20];
 
   int socketServ = socket(AF_INET, SOCK_DGRAM, 0);
-  if (sock == -1){
-    error("socket error\n");
-    return -1
+  if (socketServ == -1){
+    perror("socket error\n");
+    exit(1);
   }
 
 
@@ -30,22 +32,23 @@ int main()
   addr_server.sin_addr.s_addr = htonl(INADDR_ANY);
 
 
-  if (bind(socketServ, (const struct sockaddr *)&addr_server, sizeof(addr_server)) == -1){
+  if (bind(socketServ, (const struct sockaddr*)&addr_server, sizeof(addr_server)) == -1){
     perror("bind error\n");
-    return -1;
+    exit(1);
+  }
+  printf("bind : %d\n", socketServ);
+
+  //attente des données
+  socklen_t lg = sizeof(struct sockaddr_in);
+  int nb_octets = recvfrom(socketServ, buffer, 20, 0, (struct sockaddr*)&addr_client, &lg);
+  if(nb_octets == -1){
+    perror("reception error");
+    exit(1);
   }
 
-  //accueil 5 clients --> à changer
-  listen(socketServ, 5);
+  buffer[nb_octets] = '\0';
+  printf("Client : %s\n", buffer);
 
-
-  //déclaration de la socket client
-  socklen_t Clsize = sizeof(addr_client);
-  int socketCl = accept(socketServ, (struct sockaddr *)&addr_client, &Clsize);
-
-
-  //fermeture des sockets serveur/clients
-  close(socketCl);
   close(socketServ);
 
   return 0;
