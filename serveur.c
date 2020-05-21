@@ -1,45 +1,52 @@
-#include <sys/types.h>
+//#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <unistd.h>
 #include <netdb.h>
-#include <arpa/inet.h>
-
+//#include <arpa/inet.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-//adresse privée : hostname -i
-//adresse publique : hostname -I
 
-int main(void)
+int main()
 {
-  int socketServ = socket(AF_INET, SOCK_STREAM, 0);
-  struct sockaddr_in addrServ;
-  addrServ.sin_addr.s_addr = inet_addr("127.0.1.1");
-  addrServ.sin_family = AF_INET;
-  addrServ.sin_port = htons(30000);
 
-  bind(socketServ, (const struct sockaddr *)&addrServ, sizeof(addrServ));
-  printf("bind : %d\n", socketServ);
+  //déclaration de la socket serveur
+  struct sockaddr_in addr_server;
+  struct sockaddr_in addr_client;
 
+  int socketServ = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sock == -1){
+    error("socket error\n");
+    return -1
+  }
+
+
+  //liaison de la socket serveur sur le port voulu
+  bzero(&addr_server, sizeof(struct sockaddr_in));
+  addr_server.sin_family = AF_INET;
+  addr_server.sin_port = htons(4000);
+  addr_server.sin_addr.s_addr = htonl(INADDR_ANY);
+
+
+  if (bind(socketServ, (const struct sockaddr *)&addr_server, sizeof(addr_server)) == -1){
+    perror("bind error\n");
+    return -1;
+  }
+
+  //accueil 5 clients --> à changer
   listen(socketServ, 5);
-  printf("listen\n");
 
-  struct sockaddr_in addrCl;
-  socklen_t Clsize = sizeof(addrCl);
-  int socketCl = accept(socketServ, (struct sockaddr *)&addrCl, &Clsize);
-  printf("accept the connection\n");
 
-  printf("client : %d\n", socketCl);
+  //déclaration de la socket client
+  socklen_t Clsize = sizeof(addr_client);
+  int socketCl = accept(socketServ, (struct sockaddr *)&addr_client, &Clsize);
 
-  int valeur=15;
-  send(socketCl, &valeur, sizeof(valeur), 0);
 
+  //fermeture des sockets serveur/clients
   close(socketCl);
   close(socketServ);
-
-  printf("close the server\n");
 
   return 0;
 }
