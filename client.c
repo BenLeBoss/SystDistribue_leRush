@@ -19,6 +19,13 @@
 int main(void)
 {
 
+  configuration_t config;
+  set_port(&config);
+  set_hostname(&config);
+  tableau_entiers_t tab;
+  set_taille(&tab,5);
+  set_tableau(&tab);
+
   //déclaration de la socket
   struct sockaddr_in addr_server;
   int socketS = socket(AF_INET, SOCK_DGRAM, 0);
