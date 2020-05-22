@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
+#include "info.h"
 //gethostname -> récupère le nom de l'hote
 //gethostbyname -> récupère les informations de l'hote avec son nom
 //gethostbyaddr -> récupère les informations de l'hote avec son adresse
@@ -23,6 +23,8 @@ int main(void)
   set_port(&config);
   set_hostname(&config);
   tableau_entiers_t tab;
+  long tab1[];
+  int i;
   set_taille(&tab,5);
   set_tableau(&tab);
 
