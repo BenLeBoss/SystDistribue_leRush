@@ -19,8 +19,11 @@
 int main(void)
 {
 
+  int nbClient=0;
+  printf("Donner les nombre de clients attendus : ");
+  scanf("%d", &nbClient);
+  printf("En attente de \"%d\" clients\n", nbClient);
 
-  static struct sockaddr_in adresse;
   struct in_addr ip;
 
   //déclaration de la socket serveur
@@ -54,16 +57,21 @@ int main(void)
   //abonnement de la socket au groupe multicast
   setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &gr_multicast, sizeof(struct ip_mreq));
 
-  sleep(5);
+  unsigned char ttl = 255;
+  setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl));
 
-//  while(1){
-    char buffer[20];
+  char buffer[50];
+  char *msg = "Connecté";
+
+  for(int i=0; i<nbClient; i++)
+  {
     int addrtaille = sizeof(ad_multicast);
-    int nbytes = recvfrom(sock,buffer,30,0,(struct sockaddr *) &ad_multicast,&addrtaille);
+    int nbytes = recvfrom(sock,buffer,30,0,(struct sockaddr*) &ad_multicast,&addrtaille);
     buffer[nbytes] = '\0';
     puts(buffer);
-//  }
+    int nbites = sendto (sock, msg, strlen(msg)+1, 0, (struct sockaddr*)&ad_multicast, sizeof(ad_multicast));
+  }
 
-
+  close(sock);
   return 0;
 }
