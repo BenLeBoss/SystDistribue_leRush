@@ -16,7 +16,7 @@ typedef struct
   char *hostname;
 }configuration_t;
 
-void set_taille(tableau_entiers_t *tab,int t);
+int set_taille(tableau_entiers_t *tab,int t);
 
 void set_tableau(tableau_entiers_t *tab);
 
