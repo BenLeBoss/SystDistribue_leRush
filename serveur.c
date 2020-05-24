@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include "infos.h"
 
 //gethostname -> récupère le nom de l'hote
 //gethostbyname -> récupère les informations de l'hote avec son nom
