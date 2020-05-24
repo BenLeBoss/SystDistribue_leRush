@@ -14,9 +14,13 @@ int set_taille(tableau_entiers_t *tab,int t)
 void set_tableau(tableau_entiers_t *tab)
 {
   //tab->tableau = (int*)malloc(2*sizeof(int));
-  for (int i=0; i<=tab->taille; i++){
-    tab->tableau[i] = i;
-  }
+
+    tab->tableau[0] = 4;
+    tab->tableau[1] = 8;
+    tab->tableau[2] = 12;
+    tab->tableau[3] = 16;
+    tab->tableau[4] = 20;
+
 }
 
 
