@@ -109,7 +109,19 @@ int main(void)
     for ( i = 0; i < taille; i++) {
       buffer[i]= tab.tableau[i];
     }
-    int octets = send(sockTCP, buffer, 50,0);
+    if (nbClient= 1) {
+      int octets = send(sockTCP, buffer, 50,0);
+    }
+    int nbValeursADonnees = taille/ nbClient;
+    if ((j==nbClient-1)&&buffer[nbValeursADonnees * nbClient]!=buffer[taille]){
+      int indice = 0;
+      while (buffer[nbValeursADonnees * nbClient + indice]!=buffer[taille]){
+        int octets2 = send(sockTCP, buffer, 50,0);
+        indice++;
+      }
+    }
+
+
     int nbytes = recv(sockTCP, tab1, 50,0);
     for (int j = 0; j <= (taille-1); j++) {
       printf("Factoriel de %d  : %ld \n",buffer[j],tab1[j]);
