@@ -89,12 +89,17 @@ int main()
   //en attente de messages et affiche -------à modif reçoit le tableau
   int tableau[50];
   int nbytes = recv(socketTCP_service, tableau, sizeof(tableau),0);
+
+  int k = 0;
+  while (tableau[k]!=0){
+    printf("%d\n", tableau[k]);
+    k++;
+  }
   //à modif
   long tab1[50];
   int i,j;
-  int taille =sizeof(tableau);
   long resultat;
-  for (i=0;  i<=4;i++){
+  for (i=0;  i< k;i++){
       resultat =1;
       for (j = 1; j <= tableau[i]; j++) {
         resultat = resultat*j;
