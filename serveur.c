@@ -106,25 +106,36 @@ int main(void)
     int i,taille;
     set_tableau(&tab);
     taille= set_taille(&tab,5);
-    for ( i = 0; i < taille; i++) {
-      buffer[i]= tab.tableau[i];
-    }
-    if (nbClient= 1) {
-      int octets = send(sockTCP, buffer, 50,0);
-    }
-    int nbValeursADonnees = taille/ nbClient;
-    if ((j==nbClient-1)&&buffer[nbValeursADonnees * nbClient]!=buffer[taille]){
-      int indice = 0;
-      while (buffer[nbValeursADonnees * nbClient + indice]!=buffer[taille]){
-        int octets2 = send(sockTCP, buffer, 50,0);
-        indice++;
+    int PartieTab[50];
+    int b =0;
+    int nbValeursADonnees=taille/nbClient;
+    int indiceInf = 0;
+    int indiceSup = nbValeursADonnees;
+    for ( i = 1; i <= nbClient; i++) {
+      /* code */
+
+        if((nbClient ) == i){
+          for(b=indiceInf; b<taille; b++){
+            PartieTab[b]= tab.tableau[b];
+          }
+        }
+        else{
+          for(b=indiceInf; b<indiceSup; b++){
+            PartieTab[b]= tab.tableau[b];
+          }
+          indiceInf = indiceSup;
+          indiceSup+=nbValeursADonnees;
+        }
+
+        int octets2 = send(sockTCP, PartieTab, 50,0);
+
+        b=0;
+
       }
-    }
-
-
     int nbytes = recv(sockTCP, tab1, 50,0);
+
     for (int j = 0; j <= (taille-1); j++) {
-      printf("Factoriel de %d  : %ld \n",buffer[j],tab1[j]);
+      printf("Factoriel de %d  : %ld \n",PartieTab[j],tab1[j]);
     }
 
     close(sockTCP);
