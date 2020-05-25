@@ -9,58 +9,92 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include "infos.h"
 
 int main()
 {
 
-
-  struct in_addr ip;
-
-  //déclaration de la socket serveur
+  //PARTIE UDP
+  //déclaration de la socket udp
   int sock = socket(AF_INET, SOCK_DGRAM, 0);
   if (sock == -1){
-    perror("socket error\n");
+    perror("socket UDP error\n");
     exit(1);
   }
 
-  //autorise de lier plusieurs socket sur le port de l'ordi
-  //int reuse = 1;
-  //setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (int *)&reuse, sizeof(reuse));
-
-
-  //liaison de la socket au port du groupe multicast
-  static struct sockaddr_in ad_multicast;
-  bzero((char*)&ad_multicast, sizeof(ad_multicast));
-  ad_multicast.sin_family = AF_INET;
-  ad_multicast.sin_addr.s_addr = htons(INADDR_ANY);
-  ad_multicast.sin_port = htons(1234);
-  bind(sock, (const struct sockaddr*)&ad_multicast, sizeof(struct sockaddr_in));
-
-  //récupération adresse ip du groupe
-//inet_aton("226.1.2.3", &ip);
+  struct in_addr ip;
+  inet_aton("226.1.2.3", &ip);
 
   //création de l'identificateur du groupe
-  // struct ip_mreq gr_multicast;
-  // gr_multicast.imr_multiaddr.s_addr = ip.s_addr;
-  // gr_multicast.imr_interface.s_addr = htons(INADDR_ANY);
+  struct ip_mreq gr_multicast;
+  gr_multicast.imr_multiaddr.s_addr = ip.s_addr;
+  gr_multicast.imr_interface.s_addr = htons(INADDR_ANY);
 
-  //abonnement de la socket au groupe multicast
-  //setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &gr_multicast, sizeof(struct ip_mreq));
+  //autorise de lier plusieurs socket sur le port de l'ordi
+  int reuse = 1;
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (int *)&reuse, sizeof(reuse));
+
+  //Implémentation de la socket destinatrice
+  static struct sockaddr_in ad_multicast;
+  bzero(&ad_multicast, sizeof(ad_multicast));
+  ad_multicast.sin_family = AF_INET;
+  ad_multicast.sin_addr.s_addr =  gr_multicast.imr_multiaddr.s_addr;
+  ad_multicast.sin_port = htons(1234);
 
 
-  //envoie de paquets
-  char *msg = "Un client se connecte";
-  int nbytes = sendto (sock, msg, strlen(msg)+1, 0, (struct sockaddr*)&ad_multicast, sizeof(ad_multicast));
+  //PARTIE TCP
+  int sockTCP_ecoute = socket(AF_INET, SOCK_STREAM, 0);
+  if (sockTCP_ecoute == -1){
+    perror("socket TCP error\n");
+    exit(1);
+  }
 
-  //réponse du serveur
-  struct sockaddr_in adresse;
+  //demande un port pour que les clients en aient des différents
+  int port = 0;
+  printf("Donner un numéro de port non attribué (30 000, 40 0000 ou 50 000 par exemple) : ");
+  scanf("%d", &port);
+
+  static struct sockaddr_in addr_serveur;
+  bzero((char*)&addr_serveur, sizeof(struct sockaddr_in));
+  addr_serveur.sin_family = AF_INET;
+  addr_serveur.sin_port = htons(port);
+  addr_serveur.sin_addr.s_addr = htonl(INADDR_ANY);
+  if (bind(sockTCP_ecoute, (struct sockaddr*)&addr_serveur, sizeof(addr_serveur)) == -1){
+    perror(" bind sockTCP ecoute error");
+    exit(1);
+  }
+
+  //envoie le port au serveur
   char buffer[50];
-  int addrtaille = sizeof(ad_multicast);
-  int nbites = recvfrom(sock,buffer,100,0,(struct sockaddr*)&ad_multicast, &addrtaille);
-  buffer[nbites] = '\0';
-  printf("Confirmation que le serveur a reçu et renvoyé : ");
-  puts(buffer);
+  sprintf(buffer, "%d", port);
+  int lg = sizeof(struct sockaddr_in);
+  int nb_octets = sendto(sock, buffer, 50,0,(struct sockaddr*)&ad_multicast, lg);
+
+
+  //attend une connexion tcp (réponse du serveur)
+  if (listen(sockTCP_ecoute, 3) == -1){
+    perror("listen error");
+    exit(1);
+  }
+
+  //accepte la connexion
+  static struct sockaddr_in addr_client;
+  int lg_addr = sizeof(struct sockaddr_in);
+  int socketTCP_service = accept(sockTCP_ecoute, (struct sockaddr*)&addr_client, &lg_addr);
+  if (socketTCP_service == -1){
+    perror("socket TCP error\n");
+    exit(1);
+  }
+
+  //en attente de messages et affiche -------à modif reçoit le tableau
+  char message[50];
+  char *chaine_recue;
+  int nbytes = read(socketTCP_service, message, 50);
+  chaine_recue = (char*)malloc(nbytes * sizeof(char));
+  //à modif
+  printf("reçu message %s\n", chaine_recue);
+
+  //à rajouter le client qui renvoie le tableau au serveur
 
   close(sock);
+
 }

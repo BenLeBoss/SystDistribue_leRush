@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "infos.h"
 
 //gethostname -> récupère le nom de l'hote
 //gethostbyname -> récupère les informations de l'hote avec son nom
@@ -21,11 +20,9 @@ int main(void)
 {
 
   int nbClient=0;
-  printf("Donner les nombre de clients attendus : ");
+  printf("Donner le nombre de clients attendus : ");
   scanf("%d", &nbClient);
   printf("En attente de \"%d\" clients\n", nbClient);
-
-  struct in_addr ip;
 
   //déclaration de la socket serveur
   int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -38,16 +35,8 @@ int main(void)
   int reuse = 1;
   setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (int *)&reuse, sizeof(reuse));
 
-
-  //liaison de la socket au port du groupe multicast
-  static struct sockaddr_in ad_multicast;
-  bzero((char*)&ad_multicast, sizeof(ad_multicast));
-  ad_multicast.sin_family = AF_INET;
-  ad_multicast.sin_addr.s_addr = htons(INADDR_ANY);
-  ad_multicast.sin_port = htons(1234);
-  bind(sock, (const struct sockaddr*)&ad_multicast, sizeof(struct sockaddr_in));
-
   //récupération adresse ip du groupe
+  struct in_addr ip;
   inet_aton("226.1.2.3", &ip);
 
   //création de l'identificateur du groupe
@@ -58,20 +47,103 @@ int main(void)
   //abonnement de la socket au groupe multicast
   setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &gr_multicast, sizeof(struct ip_mreq));
 
-  unsigned char ttl = 255;
-  setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl));
+  //Implémentation de la socket destinatrice
+  static struct sockaddr_in ad_multicast;
+  bzero((char*)&ad_multicast, sizeof(ad_multicast));
+  ad_multicast.sin_family = AF_INET;
+  ad_multicast.sin_addr.s_addr = htons(INADDR_ANY);
+  ad_multicast.sin_port = htons(1234);
+  bind(sock, (struct sockaddr*)&ad_multicast, sizeof(struct sockaddr_in));
 
   char buffer[50];
-  char *msg = "Connecté";
+  //struct sockaddr *tableauClients[10];
+  char *tableauClients[10];
+  int port[10];
 
-  for(int i=0; i<nbClient; i++)
-  {
+  //initialise la connecxion avec le client, récup son adresse et son port
+  for(int i=0; i<nbClient; i++){
     int addrtaille = sizeof(ad_multicast);
-    int nbytes = recvfrom(sock,buffer,30,0,(struct sockaddr*) &ad_multicast,&addrtaille);
+    int nbytes = recvfrom(sock,buffer,30,0,(struct sockaddr*) &ad_multicast ,&addrtaille);
+    //tableauClients[i]= (struct sockaddr*)&ad_multicast;
+    tableauClients[i]=inet_ntoa(ad_multicast.sin_addr);
+    port[i]=atoi(buffer);
+    printf("Le port : %d\nL'adresse : %s\n", port[i], tableauClients[i]);
     buffer[nbytes] = '\0';
     puts(buffer);
-    int nbites = sendto (sock, msg, strlen(msg)+1, 0, (struct sockaddr*)&ad_multicast, sizeof(ad_multicast));
   }
+
+
+  //va chercher dans 2 tableaux l'adresse et le port d'un client, établie une connexion et envoie un message
+  for(int j=0; j<nbClient; j++){
+    int sockTCP = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockTCP == -1){
+      perror("socket TCP error\n");
+      exit(1);
+    }
+
+    struct hostent* host_serveur;
+    struct in_addr addr;
+    inet_aton((const char*)tableauClients[j],&addr);
+    host_serveur = gethostbyaddr(&addr, sizeof(addr), AF_INET);
+    if(host_serveur==NULL){
+      perror("host serveur error");
+      exit(1);
+    }
+    struct sockaddr_in addr_serveur;
+    bzero((char*)&addr_serveur, sizeof(addr_serveur));
+    addr_serveur.sin_family=AF_INET;
+    addr_serveur.sin_port=htons(port[j]);
+    memcpy(&addr_serveur.sin_addr.s_addr, host_serveur->h_addr, host_serveur->h_length);
+    if (connect (sockTCP, (struct sockaddr*)&addr_serveur, sizeof(struct sockaddr_in)) == -1){
+      perror("connect error");
+      exit(1);
+    }
+
+    //écrit au client ------------à modifier par le tableau à envoyer
+    int octets = write(sockTCP, "mp from server", 50);
+
+    close(sockTCP);
+  }
+
+
+  //sûrement une 3e boucle pour reçevoir les données des clients
+
+
+
+
+
+  // //Implémentation de la socket destinatrice
+  // static struct sockaddr_in ad_multicast;
+  // bzero((char*)&ad_multicast, sizeof(ad_multicast));
+  // ad_multicast.sin_family = AF_INET;
+  // ad_multicast.sin_addr.s_addr = htons(INADDR_ANY);
+  // ad_multicast.sin_port = htons(1234);
+  // bind(sock, (const struct sockaddr*)&ad_multicast, sizeof(struct sockaddr_in));
+
+  // char buffer[50];
+  // char *msg = "Connecté";
+  // struct sockaddr *tableauClients[10];
+  //
+  // //les clients se connectent et le serveur leur répond
+  // for(int i=0; i<nbClient; i++)
+  // {
+  //   int addrtaille = sizeof(ad_multicast);
+  //   int nbytes = recvfrom(sock,buffer,30,0,(struct sockaddr*) &ad_multicast,&addrtaille);
+  //   tableauClients[i]= (struct sockaddr*)&ad_multicast;
+  //
+  //   //connect(sock, (struct sockaddr*)&ad_multicast, addrtaille);
+  //   buffer[nbytes] = '\0';
+  //   puts(buffer);
+  //   int nbites = sendto (sock, msg, strlen(msg)+1, 0, tableauClients[i], sizeof(ad_multicast));
+  // }
+  //
+  // char *msg2 = "Futur tableau";
+  // //write(sock, msg2, sizeof(msg2)+1);
+  // for(int i=0; i<nbClient; i++){
+  //   int nbites = sendto (sock, msg2, strlen(msg2)+1, 0, tableauClients[i], sizeof(ad_multicast));
+  // }
+
+
 
   close(sock);
   return 0;
