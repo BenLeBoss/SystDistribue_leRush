@@ -9,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include "infos.h"
 
 int main()
 {
@@ -86,12 +87,22 @@ int main()
   }
 
   //en attente de messages et affiche -------à modif reçoit le tableau
-  char message[50];
-  char *chaine_recue;
-  int nbytes = read(socketTCP_service, message, 50);
-  chaine_recue = (char*)malloc(nbytes * sizeof(char));
+  int tableau[50];
+  int nbytes = recv(socketTCP_service, tableau, sizeof(tableau),0);
   //à modif
-  printf("reçu message %s\n", chaine_recue);
+  long tab1[50];
+  int i,j;
+  int taille =sizeof(tableau);
+  long resultat;
+  for (i=0;  i<=4;i++){
+      resultat =1;
+      for (j = 1; j <= tableau[i]; j++) {
+        resultat = resultat*j;
+      }
+      tab1[i] = resultat;
+  }
+  int octets = send(socketTCP_service, tab1, sizeof(tab1),0);
+
 
   //à rajouter le client qui renvoie le tableau au serveur
 

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
+#include "infos.h"
 //gethostname -> récupère le nom de l'hote
 //gethostbyname -> récupère les informations de l'hote avec son nom
 //gethostbyaddr -> récupère les informations de l'hote avec son adresse
@@ -100,7 +100,20 @@ int main(void)
     }
 
     //écrit au client ------------à modifier par le tableau à envoyer
-    int octets = write(sockTCP, "mp from server", 50);
+    int buffer[50];
+    tableau_entiers_t tab;
+    long tab1[50];
+    int i,taille;
+    set_tableau(&tab);
+    taille= set_taille(&tab,5);
+    for ( i = 0; i < taille; i++) {
+      buffer[i]= tab.tableau[i];
+    }
+    int octets = send(sockTCP, buffer, 50,0);
+    int nbytes = recv(sockTCP, tab1, 50,0);
+    for (int j = 0; j <= (taille-1); j++) {
+      printf("Factoriel de %d  : %ld \n",buffer[j],tab1[j]);
+    }
 
     close(sockTCP);
   }

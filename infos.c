@@ -7,7 +7,7 @@
 int set_taille(tableau_entiers_t *tab,int t)
 {
   tab->taille = t;
-  return 0;
+  return tab->taille;
 }
 
 
